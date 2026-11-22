@@ -2,10 +2,11 @@
 # Blender headless 渲染打包：把 .glb 渲成 AI 生图素材
 # 用法: blender -b -P scripts/blender_render_pack.py -- <in.glb> <outdir>
 #         [--views N] [--size 1024] [--transparent] [--passes]
+#         [--format png|jpeg]
 #
 # 产物（outdir/render/）：
 #   ref_XX.png     多角度参考图（轨道 N 张 + 俯视 + 花纹特写），可直接喂
-#                  IP-Adapter / img2img / 视觉参考
+#                  IP-Adapter / img2img / 视觉参考；--format jpeg 时约省 10 倍空间
 #   depth_XX.png   归一化深度图（--passes，近=白）
 #   normal_XX.png  世界空间法线图（--passes，-1..1 映射到 0..1）
 import bpy
@@ -71,7 +72,8 @@ def make_normal_mat():
 
 def parse_args(argv):
     glb, outdir = argv[0], argv[1]
-    opts = {"views": 8, "size": 1024, "transparent": False, "passes": False}
+    opts = {"views": 8, "size": 1024, "transparent": False, "passes": False,
+            "format": "png"}
     i = 2
     while i < len(argv):
         a = argv[i]
@@ -83,6 +85,10 @@ def parse_args(argv):
             opts["transparent"] = True; i += 1
         elif a == "--passes":
             opts["passes"] = True; i += 1
+        elif a == "--format":
+            opts["format"] = argv[i + 1].lower(); i += 2
+            if opts["format"] not in ("png", "jpeg"):
+                raise SystemExit(f"--format 仅支持 png/jpeg: {opts['format']}")
         else:
             raise SystemExit(f"未知参数: {a}")
     return glb, outdir, opts
@@ -168,7 +174,10 @@ def main():
     bg.inputs["Color"].default_value = (0.12, 0.12, 0.12, 1)
 
     scene.render.resolution_x = scene.render.resolution_y = opts["size"]
-    scene.render.image_settings.file_format = "PNG"
+    is_jpeg = opts["format"] == "jpeg"
+    scene.render.image_settings.file_format = "JPEG" if is_jpeg else "PNG"
+    if is_jpeg:
+        scene.render.image_settings.quality = 92
     scene.view_settings.view_transform = "Standard"
     scene.render.film_transparent = opts["transparent"]
     scene.use_nodes = False
@@ -201,14 +210,17 @@ def main():
     if beauty_engine == "CYCLES":
         scene.cycles.samples = 24
 
+    ext = "jpg" if is_jpeg else "png"
     for name, loc in views:
         look_at(cam, loc, center)
-        scene.render.filepath = os.path.join(render_dir, name + ".png")
+        scene.render.filepath = os.path.join(render_dir, name + "." + ext)
         bpy.ops.render.render(write_still=True)
         print("OK", name)
 
     if opts["passes"]:
-        # Blender 5.0 合成器不再支持 PNG 输出；改用材质覆盖+自发光直接渲 pass
+        # pass 必须无损：切回 PNG（Blender 5.0 合成器不再支持 PNG 输出，
+        # 改用材质覆盖+自发光直接渲 pass）
+        scene.render.image_settings.file_format = "PNG"
         vl = bpy.context.view_layer
         for out_name, mat in (("depth", make_depth_mat(cam.data)),
                               ("normal", make_normal_mat())):

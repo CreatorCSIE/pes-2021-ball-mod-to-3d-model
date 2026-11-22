@@ -71,12 +71,17 @@ python scripts\pes_ball_convert.py "extracted\dt15_x64\Asset\model\ball" -o outp
   "output\Puma_Orbita_LaLiga_EA_Sports_26-27\Puma_Orbita_LaLiga_EA_Sports_26-27.glb" ^
   "output\Puma_Orbita_LaLiga_EA_Sports_26-27\Puma_Orbita_LaLiga_EA_Sports_26-27.blend"
 
-:: 3) （可选）批量渲染 AI 生图素材：8 轨道视角 + 俯视 + 特写参考图
+:: 3) （可选）渲染 AI 生图素材：8 轨道视角 + 俯视 + 特写参考图
 "%BLENDER%" -b -P scripts\blender_render_pack.py -- ^
-  "output\Puma_Orbita_LaLiga_EA_Sports_26-27\Puma_Orbita_LaLiga_EA_Sports_26-27.glb" ^
-  "output\Puma_Orbita_LaLiga_EA_Sports_26-27" --passes
+  "output\Puma_Orbita_LaLiga_EA_Sports_26-27_ball951\Puma_Orbita_LaLiga_EA_Sports_26-27_ball951.glb" ^
+  "output\Puma_Orbita_LaLiga_EA_Sports_26-27_ball951" --passes
 ::   默认只出 ref_XX.png（IP-Adapter/img2img 直接喂的参考图）
 ::   --passes 追加 depth_XX.png（近=白）与 normal_XX.png（世界空间），供 ControlNet
+::   --format jpeg 把 ref 图输出为 .jpg（q92，体积约 1/10；pass 图始终 PNG 无损）
+::
+::   渲染策略建议：全量 1644 球 PNG 素材约 25GB，**不必预生成**——
+::   单球渲染仅十秒级，用时对目标球现渲即可（即取即用）；
+::   确需全量素材库时加 --format jpeg，总量约 1.3GB
 ::   其他参数：--views N（轨道视角数，默认 8） --size 1024 --transparent（透明底）
 ```
 
