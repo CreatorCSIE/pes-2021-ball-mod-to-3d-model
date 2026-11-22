@@ -48,7 +48,8 @@ render.bat  "output\Puma_Orbita_LaLiga_EA_Sports_26-27\Puma_Orbita_LaLiga_EA_Spo
 :: 1) 转换单个球（fpk 路径含空格时加引号）
 python scripts\pes_ball_convert.py "X:\解包目录\content\omb\Puma Orbita LaLiga EA Sports 26-27\Asset\model\ball\ball951\#Win\ball.fpk"
 
-:: 每个球的产物（glb+dds）各自落在 output\<球名>\ 文件夹下
+:: 每个球的产物（glb+dds）各自落在 output\<球名>_<ballNNN>\ 文件夹下，
+:: 同一目录下多个球（如 Sider 按联赛组织、一目录多球）也互不覆盖
 ::    -o 指定输出根目录（默认 output）；--texdir 显式指定 ftex 贴图目录
 ::    （默认自动找 fpk 同级 #windx*，贴图被挪走时才需要 --texdir）
 

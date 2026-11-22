@@ -587,6 +587,10 @@ def convert_one(fpk_path, root, texdir=None):
 
     ball_name = ball_display_name(fpk_path)
     safe = "".join(c if c.isalnum() or c in "-_" else "_" for c in ball_name)
+    # 拼上 ballNNN 编号，避免同一名称目录下多个球互相覆盖
+    ball_id = os.path.basename(os.path.dirname(os.path.dirname(fpk_path)))
+    if not safe.endswith(ball_id):
+        safe = f"{safe}_{ball_id}"
     outdir = os.path.join(root, safe)
     os.makedirs(outdir, exist_ok=True)
 
