@@ -1,0 +1,20 @@
+# 开发用试点样本（本仓库解包产生的中间物；实际使用直接处理任意解包目录，
+# 不依赖 data/。游戏版权素材，不入库）
+data/raw/
+
+# 转换/渲染产物（用脚本可重新生成）
+output/
+
+# Python
+__pycache__/
+*.pyc
+
+# 工具内部目录
+.screenshots/
+
+# Blender 自动备份
+*.blend1
+
+# 系统杂项
+Thumbs.db
+.DS_Store
