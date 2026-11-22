@@ -4,7 +4,8 @@
 模型/贴图格式（FPK/FMDL/FTEX，两者同一格式）"去 PES 化"，转换为 Blender 可直接
 使用的通用格式：**glTF 2.0（.glb）+ DDS 贴图**，并可导出 `.blend`。当前以一个球
 （Puma Orbita LaLiga EA Sports 26-27 / ball951）试点打通全链路，脚本对包内全部
-2319 个 ball 及游戏原版 `content\omb` 下的球资源同样通用。
+2319 个 ball、Sider 散装 mod 以及游戏原版球（存于 `Data\dt15_x64.cpk`，
+先用 `scripts/cpk_extract.py` 解包）同样通用。
 
 ## 工具链
 
@@ -18,6 +19,7 @@
 ├─ convert.bat / convert.sh   # 转换入口（参数透传给 pes_ball_convert.py）
 ├─ render.bat  / render.sh    # 渲染入口（参数透传给 blender_render_pack.py）
 ├─ scripts/
+│  ├─ cpk_extract.py         # CRI CPK 容器解包（提取游戏原版资源 / cpk 形态 mod）
 │  ├─ pes_ball_convert.py    # 核心转换器：ball.fpk → .glb，*.ftex → *.dds
 │  ├─ blender_check.py       # Blender headless 验证脚本（导入 glb、统计、存 blend）
 │  └─ blender_render_pack.py # AI 生图素材：多角度参考图 / 深度 / 法线 PNG 批量渲染
@@ -53,8 +55,14 @@ python scripts\pes_ball_convert.py "X:\解包目录\content\omb\Puma Orbita LaLi
 ::    -o 指定输出根目录（默认 output）；--texdir 显式指定 ftex 贴图目录
 ::    （默认自动找 fpk 同级 #windx*，贴图被挪走时才需要 --texdir）
 
-:: 1b) 批量：直接传解包后的 omb 目录，递归找出所有 ball.fpk，逐个转换、各自入文件夹
+:: 1b) 批量：直接传解包后的 omb 目录（如 Sider 的 SiderAddons\content\omb），
+:: 递归找出所有 ball.fpk，逐个转换、各自入文件夹
 python scripts\pes_ball_convert.py "X:\解包目录\content\omb" -o output
+
+:: 1c) 游戏原版球：先解包 CPK 容器（原版球在 Data\dt15_x64.cpk），再按 1b 转换
+python scripts\cpk_extract.py "X:\游戏目录\Data\dt15_x64.cpk" --list --filter ball   :: 查看条目
+python scripts\cpk_extract.py "X:\游戏目录\Data\dt15_x64.cpk" -o extracted --filter ball
+python scripts\pes_ball_convert.py "extracted\dt15_x64\Asset\model\ball" -o output
 
 :: 2) （可选）Blender headless 验证并生成 .blend
 "%BLENDER%" -b -P scripts\blender_check.py -- ^
@@ -80,8 +88,8 @@ python scripts\pes_ball_convert.py "X:\解包目录\content\omb" -o output
 | `#windx11/*.ftex` | 同名 `.dds`（zlib chunk 解压 + DX10 头重建），glTF 经 `MSFT_texture_dds` 引用 |
 | 材质元数据 | glTF `extras`：PES shader/technique 名、4 个贴图槽原始引用 |
 
-已知限制（蒙皮、specular/metalness 通道、法线 Y 惯例等）见
-[docs/pes2021-model-format.md](docs/pes2021-model-format.md) §6。
+已知限制（蒙皮、specular/metalness 通道、法线 Y 惯例、CPK 压缩条目等）见
+[docs/pes2021-model-format.md](docs/pes2021-model-format.md) §7。
 
 ## 验证结果（试点）
 

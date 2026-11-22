@@ -1,8 +1,10 @@
-# PES 2021 模型专有格式破解报告（FPK / FMDL / FTEX）
+# PES 2021 模型专有格式破解报告（FPK / FMDL / FTEX / CPK）
 
-本报告记录对 Konami PES 2021（eFootball 引擎，内部代号 "fox"）ball mod 所用
-专有格式的逆向破解过程与结论。全部字段均经过实测验证（试点样本：
-`Ballpack_Season_2026-27_Update` 中的 `Puma Orbita LaLiga EA Sports 26-27 / ball951`）。
+本报告记录对 Konami PES 2021（eFootball 引擎，内部代号 "fox"）ball mod 及
+游戏原版资源所用专有格式的逆向破解过程与结论。全部字段均经过实测验证
+（试点样本：`Ballpack_Season_2026-27_Update` 中的
+`Puma Orbita LaLiga EA Sports 26-27 / ball951`；CPK 部分实测于
+Football Life 26 安装目录的 `Data\*.cpk`）。
 
 参考实现：社区项目 [the4chancup/pes-fmdl-blender](https://github.com/the4chancup/pes-fmdl-blender)
 （Sollumz 生态，Blender 插件，含 `FmdlFile.py` / `Ftex.py`）。本报告在其基础上
@@ -222,7 +224,60 @@ DDS 头 124B（+ 非 RGBA8 时 20B DX10 扩展头），随后按 mip 顺序拼�
 原始块数据。试点 4 张贴图均为 2048×2048：bsm/srm 为 DXT5（pixfmt 4），
 nrm/mtl 为 DXT1（pixfmt 2）。
 
-## 5. 验证结论
+## 5. CRI CPK 容器（游戏原版资源）
+
+游戏原版资源（含全部原版球）打包在 `Data\*.cpk`（CRI Middleware CPK 格式，
+社区用官方 cpkMaker 打包 mod 亦为此格式）。实测 FL26 即传统 CPK，未加密。
+
+### 5.1 总体布局
+
+```
+[16B 文件头]  "CPK " + u32 0xFF + u64（值=0x2A0，用途未定）
+[头部 UTF]    @UTF 表 @0x10，单行，给出各表位置与全局信息
+[文件数据]    ContentOffset 起（对齐 Align=0x800）
+[TOC 包]      "TOC " + @UTF @TocOffset，每文件一行
+[ETOC/ITOC]   EtocOffset/ItocOffset（扩展名索引/目录索引，提取不需要）
+```
+
+### 5.2 UTF 表结构（大端字段，非 SEGA @UTF 布局）
+
+```
+0x00 "CPK "/"TOC " 等包 magic（4B）+ @UTF（4B）
++0x04 u32 表大小
++0x08 u32 rows 偏移    ┐
++0x0C u32 strings 偏移 ├ 均相对 "@UTF 起点+8"
++0x10 u32 data 偏移    ┘
++0x14 u32 表名（字符串偏移）
++0x18 u16 列数  +0x1A u16 行长  +0x1C u32 行数
+列定义（变长条目）：flags==0 时 [00][pad3][flags][u32 nameoff]（8B），
+  否则 [flags][u32 nameoff]（5B）。flags 低 4 位=类型
+  （0/1=u8, 2/3=u16, 4/5=u32, 6/7/0xB=u64, 8=f32, 0xA=str），
+  高 4 位=存储方式：0x50=行内常规；0x00/0x10/0x30=默认值/零，不占行内空间。
+```
+
+### 5.3 头部行列（实测 dt00）
+
+`UpdateDateTime, FileSize, ContentOffset(0x800), ContentSize, TocOffset,
+TocSize, TocCrc, EtocOffset, EtocSize, ItocOffset, ItocSize, ItocCrc,
+GtocOffset..., EnabledPackedSize, EnabledDataSize, TotalDataSize, Tocs,
+Files, Groups, Attrs, TotalFiles, Directories, Updates, Version, Revision,
+Align(0x800), Sorted, EID, CpkMode, Tvers('N/A, DLL3.11.05'), Comment, Codec, DpkItoc`
+
+### 5.4 TOC 行列
+
+`DirName(str), FileName(str), FileSize(u32), ExtractSize(u32),
+FileOffset(u32, 相对 ContentOffset), ID(u32), UserString(str)`
+
+`ExtractSize == FileSize` 即未压缩（实测 ball 全部未压缩）；不等时为 CRI
+压缩，`scripts/cpk_extract.py` 会跳过并提示。
+
+### 5.5 原版球位置
+
+`Data\dt15_x64.cpk`（5956 条目）含全部原版球：
+`Asset/model/ball/ballNNN/#Win/ball.fpk` + `#windx11/*.ftex`，共 313 个
+ball 相关文件。提取后目录结构与 mod 解包一致，可直接喂 `pes_ball_convert.py`。
+
+## 6. 验证结论
 
 1. `ball.fpk` → FMDL → 几何：872 顶点 / 1404 三角 / 2 层 UV，与包内已解包
    `ball_fpk/ball.fmdl` 交叉一致。
@@ -232,8 +287,12 @@ nrm/mtl 为 DXT1（pixfmt 2）。
 3. Blender 5.0.1 headless 导入 `.glb`：顶点/面/UV 统计与 FMDL dump 一致，
    bbox ±0.112 m，baseColor/normal 两张 DDS 正常加载，
    Principled BSDF + NormalMap 节点图自动生成。
+4. Sider 散装 mod 批量：91 个 ball.fpk（9 种球模，顶点 822~10574，
+   含 9-mesh LOD 球与 4096² 贴图球）91/91 转换成功，抽查 4 球 Blender 验证通过。
+5. CPK 解包：dt00/dt15 等 50+ 个 cpk 头部与 TOC 全部解析成功；从
+   `dt15_x64.cpk` 提取原版 ball000/ball001 并转换出 `.glb`+`.dds`，端到端通过。
 
-## 6. 已知限制
+## 7. 已知限制
 
 - FPK 仅支持单条目容器（ball 全部如此）。
 - 蒙皮/骨骼（b0/b5、boneWeights）未实现——球类模型不涉及。
@@ -242,3 +301,5 @@ nrm/mtl 为 DXT1（pixfmt 2）。
 - 法线贴图沿用 PES 原始（DirectX 惯例）数据，若渲染观感 Y 翻转，
   需在 Blender 中对 Normal Map 节点设 `invert Y` 或翻转 G 通道。
 - version 仅实测 0x4001EB85（PES2021 ball）；其他 PES 世代字段可能漂移。
+- CPK：`ExtractSize != FileSize` 的 CRI 压缩条目暂不解压（ball 无此情况）；
+  个别视频类 cpk（SMK_*.cpk）TOC 含特殊列布局，未适配。

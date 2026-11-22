@@ -5,6 +5,9 @@ data/raw/
 # 转换/渲染产物（用脚本可重新生成）
 output/
 
+# cpk_extract.py 默认提取目录（游戏版权素材）
+extracted/
+
 # Python
 __pycache__/
 *.pyc
