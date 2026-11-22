@@ -2,10 +2,12 @@
 
 将 PES 2021（eFootball）中 ball mod 与游戏原版 ball 资源所采用的 Konami 专有
 模型/贴图格式（FPK/FMDL/FTEX，两者同一格式）"去 PES 化"，转换为 Blender 可直接
-使用的通用格式：**glTF 2.0（.glb）+ DDS 贴图**，并可导出 `.blend`。当前以一个球
-（Puma Orbita LaLiga EA Sports 26-27 / ball951）试点打通全链路，脚本对包内全部
-2319 个 ball、Sider 散装 mod 以及游戏原版球（存于 `Data\dt15_x64.cpk`，
-先用 `scripts/cpk_extract.py` 解包）同样通用。
+使用的通用格式：**glTF 2.0（.glb）+ DDS 贴图**，并可导出 `.blend`。已以试点球
+（Puma Orbita LaLiga EA Sports 26-27 / ball951）打通全链路，并完成
+Ballpack 全量转换：**1646 个 ball 中 1644 成功**（2 个失败为 mod 作者对个别
+贴图做的故意锁定保护，本工具不破解此类文件，不属转换器问题）。
+Sider 散装 mod（91/91）与游戏原版球（存于 `Data\dt15_x64.cpk`，先用
+`scripts/cpk_extract.py` 解包）同样验证通过。
 
 ## 工具链
 
@@ -88,7 +90,8 @@ python scripts\pes_ball_convert.py "extracted\dt15_x64\Asset\model\ball" -o outp
 | `#windx11/*.ftex` | 同名 `.dds`（zlib chunk 解压 + DX10 头重建），glTF 经 `MSFT_texture_dds` 引用 |
 | 材质元数据 | glTF `extras`：PES shader/technique 名、4 个贴图槽原始引用 |
 
-已知限制（蒙皮、specular/metalness 通道、法线 Y 惯例、CPK 压缩条目等）见
+已知限制（蒙皮、specular/metalness 通道、法线 Y 惯例、CPK 压缩条目、
+作者锁定贴图等）见
 [docs/pes2021-model-format.md](docs/pes2021-model-format.md) §7。
 
 ## 验证结果（试点）
