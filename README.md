@@ -1,9 +1,10 @@
 # PES 2021 Ball Mod → 3D 模型转换器
 
-将 PES 2021（eFootball）ball mod 的 Konami 专有模型/贴图格式（FPK/FMDL/FTEX）
-"去 PES 化"，转换为 Blender 可直接使用的通用格式：**glTF 2.0（.glb）+ DDS 贴图**，
-并可导出 `.blend`。当前以一个球（Puma Orbita LaLiga EA Sports 26-27 / ball951）
-试点打通全链路，脚本对包内全部 2319 个 ball 通用。
+将 PES 2021（eFootball）中 ball mod 与游戏原版 ball 资源所采用的 Konami 专有
+模型/贴图格式（FPK/FMDL/FTEX，两者同一格式）"去 PES 化"，转换为 Blender 可直接
+使用的通用格式：**glTF 2.0（.glb）+ DDS 贴图**，并可导出 `.blend`。当前以一个球
+（Puma Orbita LaLiga EA Sports 26-27 / ball951）试点打通全链路，脚本对包内全部
+2319 个 ball 及游戏原版 `content\omb` 下的球资源同样通用。
 
 ## 工具链
 
@@ -23,7 +24,7 @@
 ├─ docs/
 │  └─ pes2021-model-format.md   # PES 2021 专有格式（FPK/FMDL/FTEX）逆向破解报告
 ├─ data/raw/ballpack/       # 开发用试点样本（本仓库解包产物；实际使用不依赖 data/，
-│                           #   直接对任意已解包的 mod 目录处理即可）
+│                           #   直接对任意已解包目录（mod 或游戏原版资源）处理即可）
 └─ output/                  # 转换产物
    └─ Puma_Orbita_LaLiga_EA_Sports_26-27/
       ├─ *.glb              # 模型（872 顶点 / 1404 三角 / 2 层 UV，含材质与贴图引用）
@@ -35,7 +36,8 @@
 ## 用法
 
 ```bat
-:: 输入是"解包后的 mod 目录"本身（如 7-Zip 解出的 content\omb\...），
+:: 输入是"解包后的目录"本身（如 7-Zip 解出的 content\omb\...）——
+:: ball mod 与游戏原版 ball 资源同为 FPK/FMDL/FTEX 格式，均可直接转换。
 :: 不需要也不依赖仓库内的 data\ 文件夹——那只是本仓库开发时的试点样本。
 
 :: 0) 也可以直接用入口脚本（bat 供 Windows / sh 供 Linux、macOS、WSL，参数透传）
@@ -91,7 +93,7 @@ python scripts\pes_ball_convert.py "X:\解包目录\content\omb" -o output
 本仓库**自研代码与文档**（`scripts/`、`docs/`、入口脚本、README）采用
 [MIT 许可证](LICENSE)。
 
-注意：MIT 仅覆盖上述内容，**不覆盖**任何游戏或 mod 素材——PES 2021 及其
-ball mod 资源（FPK/FMDL/FTEX、贴图、试点样本等）的原始权利归 Konami 及
-相应 mod 作者所有；转换产物包含游戏版权素材，同样不获得 MIT 授权，仅供
-个人学习/互操作使用。
+注意：MIT 仅覆盖上述内容，**不覆盖**任何游戏或 mod 素材——PES 2021 原版
+ball 资源及 ball mod（FPK/FMDL/FTEX、贴图、试点样本等）的原始权利归
+Konami 及相应 mod 作者所有；转换产物包含游戏版权素材，同样不获得 MIT 授权，
+仅供个人学习/互操作使用。
